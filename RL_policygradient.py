@@ -43,6 +43,9 @@ class agent():
         cycle=0
         while(cycle!=self.cycle):
             self.openGame()
+            self.value_network.epsilon-=0.002
+            if self.value_network.epsilon<=0.1:
+                self.value_network.epsilo=0.05
             for i in range(self.aimstep):
                 self.execute()
                 if self.check==1:
@@ -55,7 +58,7 @@ class agent():
 class value_network():
     def __init__(self,learning_rate,gama,epsilon):
         self.learning_rate=learning_rate
-        self.w=np.array([1,1,1,1,1,1])
+        self.w=np.ones([4,2])
         self.gama=gama
         self.epsilon=epsilon
         '''
@@ -91,18 +94,18 @@ class value_network():
         sample_value=reward+self.gama*next_value
         evaluate_value=self.state_valuesearch(last_state)
 
-        last_state=np.array(last_state)
-
-        action=np.array(self.action_to_onehot(action))
-        state_action=np.hstack([state,action]).T
-        delta_w=self.learning_rate*(evaluate_value-sample_value)*state_action
-        self.w=self.w-delta_w
-        print(self.w.T)
+        last_state=np.mat(last_state).reshape(1,4)
+        action=np.mat(self.action_to_onehot(action)).reshape(1,2)
+        delta_w=self.learning_rate*(evaluate_value-sample_value)*np.asarray(last_state.T*action)
+        #print(delta_w)
+        self.w=self.w+delta_w
+        #print(self.w.T)
     def state_action_valuesearch(self,state,action):
         state=np.array(state)
         action=np.array(self.action_to_onehot(action))
-        state_action=np.hstack([state,action]).T
-        return np.matmul(self.w.T,state_action)
+        v1=np.matmul(state,self.w)
+        v2=np.matmul(v1,action.T)
+        return v2
     def state_valuesearch(self,state):
         # based on best policy principle
         value0=self.state_action_valuesearch(state,0)
