@@ -96,7 +96,7 @@ class value_network():
         action=np.array(self.action_to_onehot(action))
         state_action=np.hstack([state,action]).T
         delta_w=self.learning_rate*(evaluate_value-sample_value)*state_action
-        self.w=self.w+delta_w
+        self.w=self.w-delta_w
         print(self.w.T)
     def state_action_valuesearch(self,state,action):
         state=np.array(state)
@@ -119,7 +119,7 @@ class value_network():
             return [1,0]
 
 if __name__=="__main__":
-    goal=200
+    goal=300
     trainset=2000
     learning_rate=0.01
     gama=0.5
