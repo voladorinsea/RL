@@ -6,23 +6,26 @@ class env():
     def __init__(self,end):
         self.time=0
         self.end=end
-        self.env=gym.make('CartPole-v1')
+        self.env=gym.make('CartPole-v0')
     def episode_generate(self):
-        self.observation=self.env.reset()
+        self.time=0
+        self.observation=self.env.reset()#np.append(self.env.reset(),[1],axis=0) 
         self.env.render()
     def episode_action(self,action):
         self.last_observation=self.observation
         observation, reward, done, info = self.env.step(int(action))
-        self.observation=observation
+        observation=observation#np.append(observation,[1],axis=0) 
+        self.observation=observation 
         self.env.render()
-        if done:
-            reward=-1
-            return  observation, reward, done, self.last_observation
-        if self.time==self.end:
+        self.time=self.time+1
+        #if done and self.time!=self.end-1:
+        #    reward=-1
+        #    return  observation, reward, done, self.last_observation
+        if self.time==self.end-1:
             reward=1
             done=1
         else:
-            reward=0
+            reward=1
         return  observation, reward, done, self.last_observation
 
 class agent():
@@ -42,7 +45,9 @@ class agent():
     def training(self):
         cycle=0
         while(cycle!=self.cycle):
+            self.check=0
             self.openGame()
+            # accelerate the train process
             self.value_network.epsilon-=0.002
             if self.value_network.epsilon<=0.1:
                 self.value_network.epsilo=0.05
@@ -58,7 +63,7 @@ class agent():
 class value_network():
     def __init__(self,learning_rate,gama,epsilon):
         self.learning_rate=learning_rate
-        self.w=np.ones([4,2])
+        self.w=np.zeros([4,2])
         self.gama=gama
         self.epsilon=epsilon
         '''
@@ -79,7 +84,7 @@ class value_network():
 
         gen1=random.random()
         if gen1>=self.epsilon:
-            if value0>=value1:
+            if value0<=value1:
                 return 0
             else:
                 return 1
@@ -91,12 +96,15 @@ class value_network():
                 return 1
     def gradient(self,state,reward,last_state,action):
         next_value=self.state_valuesearch(state)
+        # using TD(0)
         sample_value=reward+self.gama*next_value
         evaluate_value=self.state_valuesearch(last_state)
 
+
         last_state=np.mat(last_state).reshape(1,4)
         action=np.mat(self.action_to_onehot(action)).reshape(1,2)
-        delta_w=self.learning_rate*(evaluate_value-sample_value)*np.asarray(last_state.T*action)
+        t=np.asarray(last_state.T*action)
+        delta_w=self.learning_rate*(sample_value-evaluate_value)*t
         #print(delta_w)
         self.w=self.w+delta_w
         #print(self.w.T)
@@ -117,17 +125,21 @@ class value_network():
             return value1
     def action_to_onehot(self,action):
         if action==0:
-            return [0,1]
-        else:
             return [1,0]
+        else:
+            return [0,1]
 
 if __name__=="__main__":
-    goal=300
-    trainset=2000
-    learning_rate=0.01
-    gama=0.5
-    epsilon=0.5
+    goal=200
+    trainset=1000
+    learning_rate=0.1
+    gama=1
+    epsilon=1
+    # setting training environment
     AI_env=env(goal)
+    # setting value iteration model
     model=value_network(learning_rate,gama,epsilon)
+    # develop AI engine for env
     AI=agent(trainset,AI_env,model,goal)
+    # start training
     AI.training()
