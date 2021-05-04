@@ -2,6 +2,7 @@ import gym
 import PID
 import numpy as np
 import random
+from matplotlib import pyplot as plt
 class env():
     def __init__(self,end):
         self.time=0
@@ -21,7 +22,7 @@ class env():
         #if done and self.time!=self.end-1:
         #    reward=-1
         #    return  observation, reward, done, self.last_observation
-        if self.time==self.end-1:
+        if self.time==self.end:
             reward=1
             done=1
         else:
@@ -34,6 +35,7 @@ class agent():
         self.cycle=cycle 
         self.env=env
         self.value_network=value_network
+        self.score=[]
         self.aimstep=step
     def openGame(self):
         self.env.episode_generate()
@@ -54,6 +56,7 @@ class agent():
             for i in range(self.aimstep):
                 self.execute()
                 if self.check==1:
+                    self.score.extend([i+1])
                     print("Episode finished after {} timesteps".format(i + 1))
                     break
             cycle=cycle+1
@@ -143,3 +146,14 @@ if __name__=="__main__":
     AI=agent(trainset,AI_env,model,goal)
     # start training
     AI.training()
+    
+    # visualize process  
+    score=np.array(AI.score)
+    time=np.arange(1,trainset+1)
+
+    plt.title("RLcontroler")
+    plt.xlabel("time")
+    plt.ylabel("score")
+    plt.plot(time,score)
+    plt.show()
+
